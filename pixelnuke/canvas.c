@@ -300,16 +300,12 @@ static void* canvas_render_loop(void * arg) {
 
 
 void canvas_start(unsigned int texSize, void (*on_close)()) {
-
 	canvas_on_close_cb = on_close;
 	canvas_tex_size = texSize;
 	canvas_base = canvas_layer_alloc(canvas_tex_size, 0);
 	canvas_overlay = canvas_layer_alloc(canvas_tex_size, 1);
 
-	if (pthread_create(&canvas_thread, NULL, canvas_render_loop, NULL)) {
-		puts("Failed to start render thread");
-		exit(1);
-	}
+	canvas_render_loop(NULL);
 }
 
 void canvas_setcb_key(void (*on_key)(int key, int scancode, int mods)) {

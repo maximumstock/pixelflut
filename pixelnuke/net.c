@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <err.h>
+#include <pthread.h>
 
 #include "net.h"
 
@@ -47,6 +48,8 @@ static char * line_buffer;
 static net_on_connect netcb_on_connect = NULL;
 static net_on_read netcb_on_read = NULL;
 static net_on_close netcb_on_close = NULL;
+
+pthread_t net_thread;
 
 // libevent callbacks
 
@@ -165,8 +168,27 @@ static void on_accept(evutil_socket_t listener, short event, void *arg) {
 
 // Public functions
 
-void net_start(int port, net_on_connect on_connect, net_on_read on_read,
-		net_on_close on_close) {
+
+typedef struct NetThreadArguments {
+	int port;
+	net_on_connect on_connect;
+	net_on_read on_read; 
+	net_on_close on_close;
+} NetThreadArguments;
+
+static void* net_start(void * arg) {
+	NetThreadArguments *args = (NetThreadArguments *)arg;
+
+	if (args == NULL) {
+		puts("Could not start Net thread");
+		return NULL;
+	}
+
+	int port = args->port;
+	net_on_connect on_connect = args->on_connect;
+	net_on_read on_read = args->on_read;
+	net_on_close on_close = args->on_close;
+
 	evutil_socket_t listener;
 	struct sockaddr_in sin;
 	struct event *listener_event;
@@ -189,7 +211,7 @@ void net_start(int port, net_on_connect on_connect, net_on_read on_read,
 
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = 0;
-	sin.sin_port = htons(1337);
+	sin.sin_port = htons(port);
 	listener = socket(AF_INET, SOCK_STREAM, 0);
 	evutil_make_socket_nonblocking(listener);
 	evutil_make_listen_socket_reuseable(listener);
@@ -207,6 +229,22 @@ void net_start(int port, net_on_connect on_connect, net_on_read on_read,
 	event_add(listener_event, NULL);
 
 	event_base_dispatch(base);
+
+	return NULL;
+}
+
+void net_start_secondary_thread(int port, net_on_connect on_connect, net_on_read on_read,
+		net_on_close on_close) {
+	NetThreadArguments *args = (NetThreadArguments *) malloc(sizeof(NetThreadArguments));
+	args->port = port;
+	args->on_connect = on_connect;
+	args->on_read = on_read;
+	args->on_close = on_close;
+
+	if (pthread_create(&net_thread, NULL, net_start, args)) {
+		puts("Failed to start render thread");
+		exit(1);
+	}
 }
 
 void net_stop() {
@@ -245,4 +283,3 @@ void net_set_user(NetClient *client, void *user) {
 void net_get_user(NetClient *client, void **user) {
 	*user = client->user;
 }
-

@@ -187,9 +187,16 @@ int main(int argc, char **argv) {
 	canvas_setcb_key(&px_on_key);
 	canvas_setcb_resize(&px_on_resize);
 
+	net_start_secondary_thread(1337, &px_on_connect, &px_on_read, &px_on_close);
+	
+	// The OpenGL implementation in macOS' Cocoa only receives window and input events
+	// and allows most window and input actions to be executed on the main thread instead
+	// of any thread. Therefore, to create a window and setup the input event handlers,
+	// we move the canvas rendering logic onto the main thread and the network code
+	// runs in a separately spawned stack.
+	// See https://discourse.glfw.org/t/multithreading-glfw/573/4
 	canvas_start(1024, &px_on_window_close);
 
-	net_start(1337, &px_on_connect, &px_on_read, &px_on_close);
 	return 0;
 }
 

@@ -19,7 +19,7 @@ typedef void (*net_on_read)(NetClient *client, char* line);
 typedef void (*net_on_close)(NetClient *client, int error);
 
 // Start the server and block until it is closed again.
-void net_start(int port, net_on_connect on_connect, net_on_read on_read, net_on_close on_close);
+void net_start_secondary_thread(int port, net_on_connect on_connect, net_on_read on_read, net_on_close on_close);
 
 // Stop the server as soon as possible
 void net_stop();
