@@ -19,10 +19,12 @@ typedef void (*net_on_read)(NetClient *client, char *line);
 typedef void (*net_on_close)(NetClient *client, int error);
 
 // Start the server and block until it is closed again.
-void net_start_secondary_thread(int port, int id);
+// void net_start_secondary_thread(int port, int id);
+
+void start_event_loops(int loop_count, int port);
 
 // Stop the server as soon as possible
-void net_stop();
+// void net_stop();
 
 // Send a string to the client. A newline is added automatically.
 void net_send(NetClient *client, const char *msg);

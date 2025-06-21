@@ -32,7 +32,7 @@ void px_on_resize() { canvas_get_size(&px_width, &px_height); }
 
 void px_on_window_close() {
 	printf("Window closed\n");
-	net_stop();
+	// net_stop();
 }
 
 int main(int argc, char **argv) {
@@ -40,7 +40,14 @@ int main(int argc, char **argv) {
 	canvas_setcb_resize(&px_on_resize);
 
 	// net_start_secondary_thread(1337, &px_on_connect, &px_on_read, &px_on_close);
-	net_start_secondary_thread(1337, 0);
+	// net_start_secondary_thread(1337, 0);
+	int loop_count = 4;	 // TODO SO_REUSEPORT
+
+#if __APPLE__
+	loop_count = 1;
+#endif
+
+	start_event_loops(loop_count, 1337);
 
 	// The OpenGL implementation in macOS' Cocoa only receives window and input events
 	// and only allows most window and input actions to be executed on the main thread instead

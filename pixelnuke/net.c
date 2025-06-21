@@ -41,14 +41,11 @@ static net_on_connect netcb_on_connect = NULL;
 static net_on_read netcb_on_read = NULL;
 static net_on_close netcb_on_close = NULL;
 
-pthread_t net_thread;
-/** UV rewrite */
-uv_tcp_t server;
-uv_loop_t *loop;
-
 typedef struct NetThreadArguments {
 	int port;
 	int id;
+	uv_loop_t *loop;
+	uv_tcp_t *server;
 } NetThreadArguments;
 
 // Helper functions
@@ -104,7 +101,7 @@ uv_buf_t uv_buf_from_str_with_length(const char *str, int length) {
 
 // Public functions
 
-void net_stop() { uv_loop_close(loop); }
+// void net_stop() { uv_loop_close(loop); }
 
 void alloc_buffer(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf) {
 	buf->base = malloc(suggested_size);
@@ -246,6 +243,9 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
 
 void on_connection(uv_stream_t *server, int status) {
 	uv_tcp_t *client = malloc(sizeof(uv_tcp_t));
+	NetThreadArguments *ctx = (NetThreadArguments *)server->data;
+
+	// printf("new connection on thread %d\n", ctx->id);
 
 	if (status == -1) {
 		/* error */
@@ -266,13 +266,21 @@ void on_connection(uv_stream_t *server, int status) {
 }
 
 int start_uv_server(void *arg) {
-	NetThreadArguments *args = (NetThreadArguments *)arg;
-	loop = uv_default_loop();
+	// We assume we are running on our own thread at this opoint.
+	NetThreadArguments *ctx = (NetThreadArguments *)arg;
+	uv_loop_t *loop = uv_default_loop();
+	ctx->loop = loop;
+
+	uv_tcp_t server;
 
 	struct sockaddr_in addr;
-	uv_ip4_addr("0.0.0.0", args->port, &addr);
+	uv_ip4_addr("0.0.0.0", ctx->port, &addr);
 
 	uv_tcp_init(loop, &server);
+	printf("Initiated loop on thread %d on port %d\n", ctx->id, ctx->port);
+
+	ctx->server = &server;
+	ctx->server->data = ctx;
 	// uv_tcp_bind(&server, (const struct sockaddr *)&addr, UV_TCP_REUSEPORT);
 	// libuv does not support UV_TCP_REUSEPORT under macOS
 	uv_tcp_bind(&server, (const struct sockaddr *)&addr, 0);
@@ -286,13 +294,22 @@ int start_uv_server(void *arg) {
 	return uv_run(loop, UV_RUN_DEFAULT);
 }
 
-void net_start_secondary_thread(int port, int id) {
-	NetThreadArguments *args = (NetThreadArguments *)malloc(sizeof(NetThreadArguments));
-	args->port = port;
-	args->id = id;
+void start_event_loops(int loop_count, int port) {
+	pthread_t net_thread[loop_count];
+	uv_tcp_t server[loop_count];
+	uv_loop_t *loop[loop_count];
 
-	if (pthread_create(&net_thread, NULL, (void *)start_uv_server, args)) {
-		puts("Failed to start render thread");
-		exit(1);
+	for (int i = 0; i < loop_count; i++) {
+		NetThreadArguments *args = (NetThreadArguments *)malloc(sizeof(NetThreadArguments));
+		args->port = port;
+		args->id = i;
+		args->loop = &loop[i];
+		args->server = &server[i];
+
+		printf("Creating thread with id %d\n", i);
+		if (pthread_create(&net_thread[i], NULL, (void *)start_uv_server, args)) {
+			printf("Failed to start net thread with id %d\n", i);
+			exit(1);
+		}
 	}
 }
