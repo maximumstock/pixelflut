@@ -32,10 +32,28 @@
 
           mesonBuildType = "release";
         };
+        myflut-debug = pkgs.stdenv.mkDerivation {
+          name = "myflut-debug";
+          pname = "myflut-debug";
+          buildInputs = [
+            pkgs.meson
+            pkgs.ninja
+            pkgs.pkg-config
+            pkgs.cmake
+            pkgs.glfw3
+            pkgs.glew
+            pkgs.libuv
+          ];
+          src = ./.;
+
+          dontStrip = true;
+          mesonBuildType = "debugoptimized";
+        };
       in
       {
         packages = {
           myflut = myflut;
+          myflut-debug = myflut-debug;
           default = myflut;
         };
       }
