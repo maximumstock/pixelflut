@@ -161,7 +161,7 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
 				canvas_get_px(x, y, &c);
 				char str[64] = {0};
 				snprintf(str, 64, "PX %u %u %06X\n", x, y, (c >> 8));
-				uv_buf_t res = uv_buf_from_str_with_length((const char*) &str, 64);
+				uv_buf_t res = uv_buf_from_str_with_length((const char *)&str, 64);
 				int r = uv_write(req, stream, &res, 1, NULL);
 				if (r != 0) {
 					printf("Error during PX command %d\n", r);
@@ -203,7 +203,7 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
 			canvas_get_size(&width, &height);
 			char str[64] = {0};
 			snprintf(str, 64, "SIZE %d %d\n", width, height);
-			uv_buf_t res = uv_buf_from_str_with_length((const char*) &str, 64);
+			uv_buf_t res = uv_buf_from_str_with_length((const char *)&str, 64);
 			int r = uv_write(req, stream, &res, 1, NULL);
 			if (r != 0) {
 				printf("Error during SIZE command %d\n", r);
@@ -213,7 +213,7 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
 			puts("STATS COMMAND");
 			char str[64] = {0};
 			snprintf(str, 64, "STATS px:%u conn:%u\n", 0, 0);
-			uv_buf_t res = uv_buf_from_str_with_length((const char*) &str, 64);
+			uv_buf_t res = uv_buf_from_str_with_length((const char *)&str, 64);
 			int r = uv_write(req, stream, &res, 1, NULL);
 			if (r != 0) {
 				printf("Error during STATS command %d\n", r);
@@ -224,7 +224,7 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
 			char txt[] =
 				"PX x y: Get color at position (x,y)\nPX x y rrggbb(aa): Draw a pixel (with "
 				"optional alpha channel)\nSIZE: Get canvas size\nSTATS: Return statistics\n";
-			uv_buf_t res = uv_buf_from_str((const char*) &txt);
+			uv_buf_t res = uv_buf_from_str((const char *)&txt);
 			int r = uv_write(req, stream, &res, 1, NULL);
 			if (r != 0) {
 				printf("Error during HELP command %d\n", r);
@@ -283,11 +283,11 @@ int start_uv_server(void *arg) {
 	ctx->server->data = ctx;
 	// uv_tcp_bind(&server, (const struct sockaddr *)&addr, UV_TCP_REUSEPORT);
 	// libuv does not support UV_TCP_REUSEPORT under macOS
-  #if __APPLE__
-	uv_tcp_bind(&server, (const struct sockaddr *)&addr);
-  #else
+#ifdef __APPLE__
+	uv_tcp_bind(&server, (const struct sockaddr *)&addr, 0);
+#else
 	uv_tcp_bind(&server, (const struct sockaddr *)&addr, UV_TCP_REUSEPORT);
-  #endif
+#endif
 
 	int r = uv_listen((uv_stream_t *)&server, 128, on_connection);
 

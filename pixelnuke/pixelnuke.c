@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
 	// net_start_secondary_thread(1337, 0);
 	int loop_count = 4;	 // TODO SO_REUSEPORT
 
-#if __APPLE__
+#ifdef __APPLE__
 	loop_count = 1;
 #endif
 
