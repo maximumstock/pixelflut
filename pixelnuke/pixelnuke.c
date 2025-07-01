@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
 
 	// net_start_secondary_thread(1337, &px_on_connect, &px_on_read, &px_on_close);
 	// net_start_secondary_thread(1337, 0);
-	int loop_count = 4;	 // TODO SO_REUSEPORT
+	int loop_count = 1;
 
 #ifdef __APPLE__
 	loop_count = 1;
