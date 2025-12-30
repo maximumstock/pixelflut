@@ -159,6 +159,11 @@ void handle_help_command(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf
 	}
 }
 
+void handle_reset_command(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
+	printf("Handling RESET command\n");
+	canvas_fill(0x000000ff);
+}
+
 /**
  * What should the flow of handing commands be?
  *
@@ -188,9 +193,6 @@ void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
 		return;
 	}
 
-	// TODO: move this into the specific handlers, as the handler writes the data
-	uv_write_t* req = (uv_write_t*)malloc(sizeof(uv_write_t));
-
 	printf("received %d bytes\n", nread);
 
 	char* start = buf->base;
@@ -209,6 +211,8 @@ void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
 		// printf("buffer: %s", start);
 		if (fast_str_startswith("PX ", start)) {
 			printf("Handling PX command\n");
+
+			uv_write_t* req = (uv_write_t*)malloc(sizeof(uv_write_t));
 
 			const char* ptr = start + 3;
 			const char* endptr = ptr;
@@ -285,6 +289,9 @@ void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
 			break;
 		} else if (fast_str_startswith("HELP", start)) {
 			handle_help_command(stream, nread, buf);
+			break;
+		} else if (fast_str_startswith("RESET", start)) {
+			handle_reset_command(stream, nread, buf);
 			break;
 		} else {
 			// error

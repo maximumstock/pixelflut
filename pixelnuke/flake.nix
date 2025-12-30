@@ -82,6 +82,14 @@
 	  done
           '';
         };
+
+        resetPixels = pkgs.writeShellApplication {
+          name = "resetPixels";
+          runtimeInputs = [ pkgs.inetutils ];
+          text = ''
+	  printf "RESET" | nc 0.0.0.0 1337
+          '';
+        };
       in
       {
         devShells.default = with pkgs; mkShell {
@@ -93,6 +101,7 @@
             sizeCommand
             redPixels
 	    manyPixels
+	    resetPixels
           ];
           shellHook = ''zsh'';
         };

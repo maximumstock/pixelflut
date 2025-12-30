@@ -17,11 +17,10 @@ int canvas_get_display();
 
 void canvas_fill(uint32_t rgba);
 void canvas_set_px(unsigned int x, unsigned int y, uint32_t rgba);
-void canvas_get_px(unsigned int x, unsigned int y, uint32_t *rgba);
+void canvas_get_px(unsigned int x, unsigned int y, uint32_t* rgba);
 
 // get the current visible canvas size in pixel.
 // The actual window might be bigger if scaling is enabled.
-void canvas_get_size(unsigned int *width, unsigned int *height);
-
+void canvas_get_size(unsigned int* width, unsigned int* height);
 
 #endif /* CANVAS_H_ */
