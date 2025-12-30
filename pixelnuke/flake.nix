@@ -55,7 +55,7 @@
           name = "sizeCommand";
           runtimeInputs = [ pkgs.inetutils ];
           text = ''
-          printf "SIZE\nSIZE\n" | nc 0.0.0.0 1337
+          printf "SIZE" | nc 0.0.0.0 1337
           '';
         };
 
@@ -63,12 +63,28 @@
           name = "redPixels";
           runtimeInputs = [ pkgs.inetutils ];
           text = ''
-          printf "1 1 ff0000\n2 1 ff0000\n3 1 ff0000\n" | nc 0.0.0.0 1337
+          printf "PX 1 1 ff0000\nPX 2 1 ff0000\nPX 3 1 ff0000\n" | nc 0.0.0.0 1337
+          '';
+        };
+
+        manyPixels = pkgs.writeShellApplication {
+          name = "manyPixels";
+          runtimeInputs = [ pkgs.inetutils ];
+          text = ''
+	  for column in $(seq 1 1);
+	  do
+	    A="PX 0 0 ff0000";
+	    for row in $(seq 1 500);
+	    do
+	        A="$A\nPX $column $row ff0000";
+	    done
+	    echo "$A" | nc 0.0.0.0 1337
+	  done
           '';
         };
       in
       {
-        devShells.default = with pkgs; pkgs.mkShell {
+        devShells.default = with pkgs; mkShell {
           stdenv = clangStdenv;
           nativeBuildInputs = [ clang-tools ];
           packages = [
@@ -76,6 +92,7 @@
             gdb
             sizeCommand
             redPixels
+	    manyPixels
           ];
           shellHook = ''zsh'';
         };
